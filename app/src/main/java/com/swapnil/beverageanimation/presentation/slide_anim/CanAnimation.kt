@@ -1,5 +1,6 @@
 package com.swapnil.beverageanimation.presentation.slide_anim
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -17,6 +18,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.with
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -107,19 +110,43 @@ fun CanAnimation(
         )
     )
 
-
+    val imageList= listOf(
+        listOf(
+            R.drawable.melon,
+            R.drawable.watermelon,
+        ),
+        listOf(
+            R.drawable.peach,
+            R.drawable.peach,
+        ),
+        listOf(
+            R.drawable.peach,
+            R.drawable.peach,
+        )
+    )
     val hover1 by rememberHoverOffset(-15f, 15f)
     val hover2 by rememberHoverOffset(-30f, 20f)
     val hover3 by rememberHoverOffset(-10f, 10f)
     val hover4 by rememberHoverOffset(-25f, 25f)
 
     val scope= rememberCoroutineScope()
+
     var visible by remember { mutableStateOf(false) }
+    var isFirstTime by remember { mutableStateOf(true) }
+
+
 
     LaunchedEffect(Unit) {
-        delay(500)
-        visible = true
+        delay(2000)
+        isFirstTime=false
     }
+    LaunchedEffect(index) {
+        visible = false
+        delay(100) // short delay to reset visibility
+        visible = true
+
+    }
+
 
     Box(
         Modifier
@@ -158,75 +185,123 @@ fun CanAnimation(
         contentAlignment = Alignment.Center
     ) {
 
-        AnimatedImageFromTop(
-            visibility = visible,
-            imageResId = R.drawable.melon,
-            modifier = Modifier
-                .padding(top = 100.dp)
-                .fillMaxWidth()
-                .height(150.dp)
-                .graphicsLayer {
-                    translationY = hover1
-                    /* scaleX = scale
-                     scaleY = scale*/
-                }
-                //.rotate(-30f)
-            ,
-            alignment = Alignment.Center,
-            contentScale = ContentScale.FillBounds
-        )
-        AnimatedImageFromTop(
-            visibility = visible,
-            imageResId = R.drawable.watermelon,
-            modifier = Modifier
-                .padding(start = 50.dp, bottom = 250.dp)
-                .size(200.dp)
-                .graphicsLayer {
-                    translationY = hover2
-                    /* scaleX = scale
-                     scaleY = scale*/
-                }
-                .rotate(-30f)
-            ,
-            alignment = Alignment.CenterStart
-        )
+        if(isFirstTime)
+        {
+            AnimatedImageFromTopFT(
+                visibility = visible,
+                imageResId = imageList[index][0],
+                modifier = Modifier
+                    .padding(top = 100.dp)
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .graphicsLayer { translationY = hover1 },
+                alignment = Alignment.Center,
+                contentScale = ContentScale.FillBounds
+            )
 
-        AnimatedImageFromTop(
-            visibility = visible,
-            imageResId = R.drawable.watermelon,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(top = 20.dp)
-                .size(150.dp)
-                .graphicsLayer {
-                    translationY = hover3
-                    /* scaleX = scale
-                     scaleY = scale*/
+            AnimatedImageFromTopFT(
+                visibility = visible,
+                imageResId = imageList[index][1],
+                modifier = Modifier
+                    .padding(start = 50.dp, bottom = 250.dp)
+                    .size(200.dp)
+                    .graphicsLayer { translationY = hover2 }
+                    .rotate(-30f),
+                alignment = Alignment.CenterStart
+            )
+
+            AnimatedImageFromTopFT(
+                visibility = visible,
+                imageResId = imageList[index][1],
+                modifier = Modifier
+                    .padding(top = 20.dp)
+                    .size(150.dp)
+                    .graphicsLayer { translationY = hover3 },
+                alignment = Alignment.TopStart
+            )
+
+            AnimatedImageFromTopFT(
+                visibility = visible,
+                imageResId = imageList[index][1],
+                modifier = Modifier
+                    .padding(top = 100.dp)
+                    .size(150.dp)
+                    .graphicsLayer { translationY = hover4 }
+                    .rotate(-30f),
+                alignment = Alignment.TopEnd
+            )
+        }
+        else{
+            AnimatedContent(
+                targetState = index,
+                transitionSpec = {
+                    (slideInVertically(
+                        initialOffsetY = { -it }, // New images come from top
+                        animationSpec = tween(800)
+                    ) + fadeIn()) togetherWith
+                            (slideOutVertically(
+                                targetOffsetY = { -it }, // Old images go to top
+                                animationSpec = tween(800)
+                            ) + fadeOut())
+                },
+                contentAlignment = Alignment.Center,
+                label = "ImageTransition"
+            ) { targetIndex ->
+
+                // Image Group based on targetIndex
+                Box(modifier = Modifier.fillMaxSize()) {
+
+                    AnimatedImageFromTop(
+                        visibility = true,
+                        imageResId = imageList[targetIndex][0],
+                        modifier = Modifier
+                            .padding(top = 100.dp)
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .graphicsLayer { translationY = hover1 },
+                        alignment = Alignment.Center,
+                        contentScale = ContentScale.FillBounds
+                    )
+
+                    AnimatedImageFromTop(
+                        visibility = true,
+                        imageResId = imageList[targetIndex][1],
+                        modifier = Modifier
+                            .padding(start = 50.dp, bottom = 250.dp)
+                            .size(200.dp)
+                            .graphicsLayer { translationY = hover2 }
+                            .rotate(-30f),
+                        alignment = Alignment.CenterStart
+                    )
+
+                    AnimatedImageFromTop(
+                        visibility = true,
+                        imageResId = imageList[targetIndex][1],
+                        modifier = Modifier
+                            .padding(top = 20.dp)
+                            .size(150.dp)
+                            .graphicsLayer { translationY = hover3 },
+                        alignment = Alignment.TopStart
+                    )
+
+                    AnimatedImageFromTop(
+                        visibility = true,
+                        imageResId = imageList[targetIndex][1],
+                        modifier = Modifier
+                            .padding(top = 100.dp)
+                            .size(150.dp)
+                            .graphicsLayer { translationY = hover4 }
+                            .rotate(-30f),
+                        alignment = Alignment.TopEnd
+                    )
                 }
-            //.rotate(30f)
-            ,
-            alignment = Alignment.TopStart
-        )
-        AnimatedImageFromTop(
-            visibility = visible,
-            imageResId = R.drawable.watermelon,
-            modifier = Modifier
-                .padding(top = 100.dp)
-                .size(150.dp)
-                .graphicsLayer {
-                    translationY = hover4
-                    /* scaleX = scale
-                     scaleY = scale*/
-                }
-                .rotate(-30f)
-            ,
-            alignment = Alignment.TopEnd
-        )
+            }
+        }
+
+
         Canvas(modifier = modifier
             .graphicsLayer {
                 translationY = hoverOffset
-                /* scaleX = scale
-                 scaleY = scale*/
             })
         {
             val paint = Paint()
@@ -403,6 +478,55 @@ fun AnimatedContentFromTop(
     }
 }
 @Composable
+fun AnimatedImageFromTopFT(
+    visibility: Boolean,
+    imageResId: Int,
+    modifier: Modifier = Modifier.size(150.dp),
+    alignment: Alignment,
+    contentScale: ContentScale= ContentScale.Fit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = alignment
+    ) {
+        AnimatedVisibility(
+            visible = visibility,
+            enter = slideInVertically(
+                initialOffsetY = { -it }, // Start above the screen
+                animationSpec = tween(
+                    durationMillis = 800,
+                    easing = LinearOutSlowInEasing
+                )
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 800,
+                    easing = LinearOutSlowInEasing
+                )
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it }, // Exit back to top
+                animationSpec = tween(
+                    durationMillis = 800,
+                    easing = FastOutSlowInEasing
+                )
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 800,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        ) {
+            Image(
+                painter = painterResource(id = imageResId),
+                contentDescription = null,
+                modifier = modifier,
+                contentScale =contentScale
+            )
+        }
+    }
+}
+
+@Composable
 fun AnimatedImageFromTop(
     visibility: Boolean,
     imageResId: Int,
@@ -410,44 +534,19 @@ fun AnimatedImageFromTop(
     alignment: Alignment,
     contentScale: ContentScale=ContentScale.Fit
 ) {
+
     Box(
         Modifier.fillMaxSize(),
         contentAlignment = alignment
     )
     {
-        AnimatedVisibility(
-            visible = visibility,
-            enter = slideInVertically(
-                initialOffsetY = { -it }, // Start above the screen
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it }, // Exit back to top
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            )
-        ) {
-            Image(
-                painter = painterResource(id = imageResId),
-                contentDescription = null,
-                contentScale = contentScale,
-                modifier = modifier
-            )
-        }
+
+        Image(
+            painter = painterResource(id = imageResId),
+            contentDescription = null,
+            contentScale = contentScale,
+            modifier = modifier
+        )
+
     }
 }
