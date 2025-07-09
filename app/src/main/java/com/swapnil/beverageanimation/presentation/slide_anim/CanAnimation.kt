@@ -149,23 +149,11 @@ fun CanAnimation(
 
     val scope = rememberCoroutineScope()
 
-    var visible by remember { mutableStateOf(false) }
-    var isFirstTime by remember { mutableStateOf(true) }
-
-
+    var animateEntry by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(1000)
-        isFirstTime = false
+        animateEntry = true
     }
-    LaunchedEffect(index) {
-        visible = false
-        delay(100) // short delay to reset visibility
-        visible = true
-
-    }
-
-
     Box(
         Modifier
             .fillMaxSize()
@@ -182,7 +170,6 @@ fun CanAnimation(
                         }
 
                         if (nextIndex != index) {
-                            isFirstTime=false
                             index = nextIndex
                             scope.launch {
                                 animatedStartPercent.animateTo(
@@ -204,60 +191,8 @@ fun CanAnimation(
         contentAlignment = Alignment.Center
     ) {
 
-        if (isFirstTime) {
-            AnimatedImageFromTopFT(
-                visibility = visible,
-                imageResId = imageList[index][0],
-                modifier = Modifier
-                    .padding(top = 100.dp)
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .graphicsLayer { translationY = hover1 },
-                alignment = Alignment.Center,
-                contentScale = ContentScale.FillBounds
-            )
-
-            AnimatedImageFromTopFT(
-                visibility = visible,
-                imageResId = imageList[index][1],
-                modifier = Modifier
-                    .padding(start = 50.dp, bottom = 250.dp)
-                    .size(200.dp)
-                    .graphicsLayer { translationY = hover2 }
-                    .rotate(-30f),
-                alignment = Alignment.CenterStart
-            )
-
-            AnimatedImageFromTopFT(
-                visibility = visible,
-                imageResId = imageList[index][2],
-                modifier = Modifier
-                    .padding(top = 20.dp)
-                    .size(150.dp)
-                    .graphicsLayer { translationY = hover3 },
-                alignment = Alignment.TopStart
-            )
-
-            AnimatedImageFromTopFT(
-                visibility = visible,
-                imageResId = imageList[index][3],
-                modifier = Modifier
-                    .padding(top = 100.dp)
-                    .size(150.dp)
-                    .graphicsLayer { translationY = hover4 }
-                    .rotate(-30f),
-                alignment = Alignment.TopEnd
-            )
-            AnimatedContentFromTopFT(
-                visibility = visible,
-                modifier = Modifier,
-                title = "Summer Splash",
-                content = "A juicy burst of sweet watermelon fizz that keeps you refreshed all day. Perfect for hot afternoons and cool vibes.",
-                alignment = Alignment.BottomStart
-            )
-        } else {
             AnimatedContent(
-                targetState = index,
+                targetState = index to animateEntry,
                 transitionSpec = {
                     (slideInVertically(
                         initialOffsetY = { -it }, // New images come from top
@@ -270,13 +205,13 @@ fun CanAnimation(
                 },
                 contentAlignment = Alignment.Center,
                 label = "ImageTransition"
-            ) { targetIndex ->
+            ) { (targetIndex, hasAnimated) ->
 
                 // Image Group based on targetIndex
                 Box(modifier = Modifier.fillMaxSize()) {
 
                     AnimatedImageFromTop(
-                        visibility = true,
+                        visibility = hasAnimated,
                         imageResId = imageList[targetIndex][0],
                         modifier = Modifier
                             .padding(top = 100.dp)
@@ -288,7 +223,7 @@ fun CanAnimation(
                     )
 
                     AnimatedImageFromTop(
-                        visibility = true,
+                        visibility = hasAnimated,
                         imageResId = imageList[targetIndex][1],
                         modifier = Modifier
                             .padding(start = 50.dp, bottom = 250.dp)
@@ -299,7 +234,7 @@ fun CanAnimation(
                     )
 
                     AnimatedImageFromTop(
-                        visibility = true,
+                        visibility = hasAnimated,
                         imageResId = imageList[targetIndex][2],
                         modifier = Modifier
                             .padding(top = 20.dp)
@@ -309,7 +244,7 @@ fun CanAnimation(
                     )
 
                     AnimatedImageFromTop(
-                        visibility = true,
+                        visibility = hasAnimated,
                         imageResId = imageList[targetIndex][3],
                         modifier = Modifier
                             .padding(top = 100.dp)
@@ -321,7 +256,7 @@ fun CanAnimation(
                 }
             }
             AnimatedContent(
-                targetState = index,
+                targetState = index to animateEntry,
                 transitionSpec = {
                     (slideInVertically(
                         initialOffsetY = { it }, // New images come from top
@@ -335,10 +270,10 @@ fun CanAnimation(
                 contentAlignment = Alignment.Center,
                 label = "TextTransition"
             ){
-                targetIndex->
+                    (targetIndex, hasAnimated) ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     AnimatedContentFromTop(
-                        visibility = true,
+                        visibility = hasAnimated,
                         modifier = Modifier,
                         title = textList[targetIndex][0],
                         content = textList[targetIndex][1],
@@ -346,7 +281,7 @@ fun CanAnimation(
                     )
                 }
             }
-        }
+
 
 
         Canvas(
@@ -427,103 +362,6 @@ fun rememberHoverOffset(
 }
 
 @Composable
-fun AnimatedContentFromTopFT(
-    visibility: Boolean,
-    modifier: Modifier,
-    title: String,
-    content: String,
-    alignment: Alignment,
-) {
-    var animateDivider by remember { mutableStateOf(false) }
-
-    // Trigger divider animation when visibility becomes true
-    /*LaunchedEffect(visibility) {
-        if (visibility) {
-            animateDivider = true
-        } else {
-            animateDivider = false
-        }
-    }
-*/
-    val progress by animateFloatAsState(
-        targetValue = if (animateDivider) 1f else 0f,
-        animationSpec = tween(durationMillis = 1500, easing = EaseInOutSine),
-        label = "DividerProgress"
-    )
-
-    Box(
-        Modifier.fillMaxSize(),
-        contentAlignment = alignment
-    )
-    {
-        AnimatedVisibility(
-            visible = visibility,
-            enter = slideInVertically(
-                initialOffsetY = { it }, // Start above the screen
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it }, // Exit back to top
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(bottom = 50.dp)
-            ) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontFamily = Poppins,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Left,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp)
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth(progress)
-                        .padding(start = 10.dp, end = 10.dp),
-                    thickness = 2.dp,
-                    color = Color.White
-
-                )
-                Text(
-                    text = content,
-                    color = Color.White,
-                    fontFamily = Poppins,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Left,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp, end = 10.dp, top = 15.dp)
-                )
-            }
-
-        }
-    }
-}
-
-@Composable
 fun AnimatedContentFromTop(
     visibility: Boolean,
     modifier: Modifier,
@@ -571,8 +409,8 @@ fun AnimatedContentFromTop(
             HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth(progress)
-                    .padding(start = 10.dp, end = 10.dp),
-                thickness = 2.dp,
+                    .padding(start = 10.dp,top=8.dp, end = 10.dp),
+                thickness = 3.dp,
                 color = Color.White
 
             )
@@ -581,7 +419,7 @@ fun AnimatedContentFromTop(
                 color = Color.White,
                 fontFamily = Poppins,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Left,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -591,54 +429,6 @@ fun AnimatedContentFromTop(
     }
 }
 
-@Composable
-fun AnimatedImageFromTopFT(
-    visibility: Boolean,
-    imageResId: Int,
-    modifier: Modifier = Modifier.size(150.dp),
-    alignment: Alignment,
-    contentScale: ContentScale = ContentScale.Fit
-) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = alignment
-    ) {
-        AnimatedVisibility(
-            visible = visibility,
-            enter = slideInVertically(
-                initialOffsetY = { -it }, // Start above the screen
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it }, // Exit back to top
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 800,
-                    easing = EaseInOutSine
-                )
-            )
-        ) {
-            Image(
-                painter = painterResource(id = imageResId),
-                contentDescription = null,
-                modifier = modifier,
-                contentScale = contentScale
-            )
-        }
-    }
-}
 
 @Composable
 fun AnimatedImageFromTop(
