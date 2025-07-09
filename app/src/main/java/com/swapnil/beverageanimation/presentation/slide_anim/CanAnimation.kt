@@ -19,20 +19,17 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -105,23 +102,44 @@ fun CanAnimation(
         initialValue = -20f,
         targetValue = 20f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = EaseInOutSine ),
+            animation = tween(1000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         )
     )
 
-    val imageList= listOf(
+    val imageList = listOf(
         listOf(
-            R.drawable.melon,
+            R.drawable.melon_middle_img,
+            R.drawable.watermelon,
+            R.drawable.watermelon,
             R.drawable.watermelon,
         ),
         listOf(
+            R.drawable.exotic_middle_img,
+            R.drawable.peach,
             R.drawable.peach,
             R.drawable.peach,
         ),
         listOf(
-            R.drawable.peach,
-            R.drawable.peach,
+            R.drawable.exotic_middle_img,
+            R.drawable.exotic_fruit2,
+            R.drawable.exotic_fruit1,
+            R.drawable.exotic_fruit1,
+        )
+    )
+
+    val textList= listOf(
+        listOf(
+            "Summer Splash",
+            "A juicy burst of sweet watermelon fizz that keeps you refreshed all day. Perfect for hot afternoons and cool vibes."
+        ),
+        listOf(
+            "Peachy Pop",
+            "Crisp, smooth, and lightly sweet — this peach soda brings sunshine to every sip with a mellow, fruity finish."
+        ),
+        listOf(
+            "Tropical Zing",
+            "A bold fusion of tropical flavors with a tangy twist. Every can pops with a mysterious fruit explosion you’ll crave again and again."
         )
     )
     val hover1 by rememberHoverOffset(-15f, 15f)
@@ -129,7 +147,7 @@ fun CanAnimation(
     val hover3 by rememberHoverOffset(-10f, 10f)
     val hover4 by rememberHoverOffset(-25f, 25f)
 
-    val scope= rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     var visible by remember { mutableStateOf(false) }
     var isFirstTime by remember { mutableStateOf(true) }
@@ -137,8 +155,8 @@ fun CanAnimation(
 
 
     LaunchedEffect(Unit) {
-        delay(2000)
-        isFirstTime=false
+        delay(1000)
+        isFirstTime = false
     }
     LaunchedEffect(index) {
         visible = false
@@ -164,6 +182,7 @@ fun CanAnimation(
                         }
 
                         if (nextIndex != index) {
+                            isFirstTime=false
                             index = nextIndex
                             scope.launch {
                                 animatedStartPercent.animateTo(
@@ -185,8 +204,7 @@ fun CanAnimation(
         contentAlignment = Alignment.Center
     ) {
 
-        if(isFirstTime)
-        {
+        if (isFirstTime) {
             AnimatedImageFromTopFT(
                 visibility = visible,
                 imageResId = imageList[index][0],
@@ -212,7 +230,7 @@ fun CanAnimation(
 
             AnimatedImageFromTopFT(
                 visibility = visible,
-                imageResId = imageList[index][1],
+                imageResId = imageList[index][2],
                 modifier = Modifier
                     .padding(top = 20.dp)
                     .size(150.dp)
@@ -222,7 +240,7 @@ fun CanAnimation(
 
             AnimatedImageFromTopFT(
                 visibility = visible,
-                imageResId = imageList[index][1],
+                imageResId = imageList[index][3],
                 modifier = Modifier
                     .padding(top = 100.dp)
                     .size(150.dp)
@@ -230,8 +248,14 @@ fun CanAnimation(
                     .rotate(-30f),
                 alignment = Alignment.TopEnd
             )
-        }
-        else{
+            AnimatedContentFromTopFT(
+                visibility = visible,
+                modifier = Modifier,
+                title = "Summer Splash",
+                content = "A juicy burst of sweet watermelon fizz that keeps you refreshed all day. Perfect for hot afternoons and cool vibes.",
+                alignment = Alignment.BottomStart
+            )
+        } else {
             AnimatedContent(
                 targetState = index,
                 transitionSpec = {
@@ -276,7 +300,7 @@ fun CanAnimation(
 
                     AnimatedImageFromTop(
                         visibility = true,
-                        imageResId = imageList[targetIndex][1],
+                        imageResId = imageList[targetIndex][2],
                         modifier = Modifier
                             .padding(top = 20.dp)
                             .size(150.dp)
@@ -286,7 +310,7 @@ fun CanAnimation(
 
                     AnimatedImageFromTop(
                         visibility = true,
-                        imageResId = imageList[targetIndex][1],
+                        imageResId = imageList[targetIndex][3],
                         modifier = Modifier
                             .padding(top = 100.dp)
                             .size(150.dp)
@@ -296,13 +320,40 @@ fun CanAnimation(
                     )
                 }
             }
+            AnimatedContent(
+                targetState = index,
+                transitionSpec = {
+                    (slideInVertically(
+                        initialOffsetY = { it }, // New images come from top
+                        animationSpec = tween(800)
+                    ) + fadeIn()) togetherWith
+                            (slideOutVertically(
+                                targetOffsetY = { it }, // Old images go to top
+                                animationSpec = tween(800)
+                            ) + fadeOut())
+                },
+                contentAlignment = Alignment.Center,
+                label = "TextTransition"
+            ){
+                targetIndex->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AnimatedContentFromTop(
+                        visibility = true,
+                        modifier = Modifier,
+                        title = textList[targetIndex][0],
+                        content = textList[targetIndex][1],
+                        alignment = Alignment.BottomStart,
+                    )
+                }
+            }
         }
 
 
-        Canvas(modifier = modifier
-            .graphicsLayer {
-                translationY = hoverOffset
-            })
+        Canvas(
+            modifier = modifier
+                .graphicsLayer {
+                    translationY = hoverOffset
+                })
         {
             val paint = Paint()
             val canvasWidth = size.width
@@ -353,14 +404,7 @@ fun CanAnimation(
         }
 
 
-        AnimatedContentFromTop(
-            visibility = visible,
-            modifier = Modifier
-            ,
-            title = "Summer Splash",
-            content = "A juicy burst of sweet watermelon fizz that keeps you refreshed all day. Perfect for hot afternoons and cool vibes.",
-            alignment = Alignment.BottomStart
-        )
+
 
     }
 }
@@ -383,7 +427,7 @@ fun rememberHoverOffset(
 }
 
 @Composable
-fun AnimatedContentFromTop(
+fun AnimatedContentFromTopFT(
     visibility: Boolean,
     modifier: Modifier,
     title: String,
@@ -393,14 +437,14 @@ fun AnimatedContentFromTop(
     var animateDivider by remember { mutableStateOf(false) }
 
     // Trigger divider animation when visibility becomes true
-    LaunchedEffect(visibility) {
+    /*LaunchedEffect(visibility) {
         if (visibility) {
             animateDivider = true
         } else {
             animateDivider = false
         }
     }
-
+*/
     val progress by animateFloatAsState(
         targetValue = if (animateDivider) 1f else 0f,
         animationSpec = tween(durationMillis = 1500, easing = EaseInOutSine),
@@ -455,7 +499,8 @@ fun AnimatedContentFromTop(
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth(progress)
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
                         .padding(start = 10.dp, end = 10.dp),
                     thickness = 2.dp,
                     color = Color.White
@@ -477,13 +522,82 @@ fun AnimatedContentFromTop(
         }
     }
 }
+
+@Composable
+fun AnimatedContentFromTop(
+    visibility: Boolean,
+    modifier: Modifier,
+    title: String,
+    content: String,
+    alignment: Alignment,
+) {
+    var animateDivider by remember { mutableStateOf(false) }
+
+    // Trigger divider animation when visibility becomes true
+    LaunchedEffect(visibility) {
+        if (visibility) {
+            animateDivider = true
+        } else {
+            animateDivider = false
+        }
+    }
+
+    val progress by animateFloatAsState(
+        targetValue = if (animateDivider) 1f else 0f,
+        animationSpec = tween(durationMillis = 1500, easing = EaseInOutSine),
+        label = "DividerProgress"
+    )
+
+    Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = alignment
+    )
+    {
+        Column(
+            modifier = Modifier.padding(bottom = 50.dp)
+        ) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontFamily = Poppins,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Left,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp)
+            )
+
+            HorizontalDivider(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .padding(start = 10.dp, end = 10.dp),
+                thickness = 2.dp,
+                color = Color.White
+
+            )
+            Text(
+                text = content,
+                color = Color.White,
+                fontFamily = Poppins,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Left,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, end = 10.dp, top = 15.dp)
+            )
+        }
+    }
+}
+
 @Composable
 fun AnimatedImageFromTopFT(
     visibility: Boolean,
     imageResId: Int,
     modifier: Modifier = Modifier.size(150.dp),
     alignment: Alignment,
-    contentScale: ContentScale= ContentScale.Fit
+    contentScale: ContentScale = ContentScale.Fit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -495,24 +609,24 @@ fun AnimatedImageFromTopFT(
                 initialOffsetY = { -it }, // Start above the screen
                 animationSpec = tween(
                     durationMillis = 800,
-                    easing = LinearOutSlowInEasing
+                    easing = EaseInOutSine
                 )
             ) + fadeIn(
                 animationSpec = tween(
                     durationMillis = 800,
-                    easing = LinearOutSlowInEasing
+                    easing = EaseInOutSine
                 )
             ),
             exit = slideOutVertically(
                 targetOffsetY = { -it }, // Exit back to top
                 animationSpec = tween(
                     durationMillis = 800,
-                    easing = FastOutSlowInEasing
+                    easing = EaseInOutSine
                 )
             ) + fadeOut(
                 animationSpec = tween(
                     durationMillis = 800,
-                    easing = FastOutSlowInEasing
+                    easing = EaseInOutSine
                 )
             )
         ) {
@@ -520,7 +634,7 @@ fun AnimatedImageFromTopFT(
                 painter = painterResource(id = imageResId),
                 contentDescription = null,
                 modifier = modifier,
-                contentScale =contentScale
+                contentScale = contentScale
             )
         }
     }
@@ -532,7 +646,7 @@ fun AnimatedImageFromTop(
     imageResId: Int,
     modifier: Modifier,
     alignment: Alignment,
-    contentScale: ContentScale=ContentScale.Fit
+    contentScale: ContentScale = ContentScale.Fit
 ) {
 
     Box(
