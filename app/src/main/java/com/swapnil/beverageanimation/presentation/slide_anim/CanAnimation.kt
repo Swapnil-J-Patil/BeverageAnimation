@@ -1,5 +1,6 @@
 package com.swapnil.beverageanimation.presentation.slide_anim
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -53,6 +54,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
@@ -128,7 +130,7 @@ fun CanAnimation(
         )
     )
 
-    val textList= listOf(
+    val textList = listOf(
         listOf(
             "Summer Splash",
             "A juicy burst of sweet watermelon fizz that keeps you refreshed all day. Perfect for hot afternoons and cool vibes."
@@ -154,194 +156,378 @@ fun CanAnimation(
     LaunchedEffect(Unit) {
         animateEntry = true
     }
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(animatedBgColor)
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        val threshold = 80f // minimum drag distance to trigger switch
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    val isTab =configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 600
+    when {
+        isTab && isPortrait -> {
+        //Tab and Vertical
+        }
+        isTab && !isPortrait -> {
+        //Tab and horizontal
+        }
+        !isTab && isPortrait -> {
+        //Phone and vertical
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(animatedBgColor)
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                val threshold = 80f // minimum drag distance to trigger switch
 
-                        val nextIndex = when {
-                            totalDrag < -threshold && index < steps.lastIndex -> index + 1
-                            totalDrag > threshold && index > 0 -> index - 1
-                            else -> index
-                        }
+                                val nextIndex = when {
+                                    totalDrag < -threshold && index < steps.lastIndex -> index + 1
+                                    totalDrag > threshold && index > 0 -> index - 1
+                                    else -> index
+                                }
 
-                        if (nextIndex != index) {
-                            index = nextIndex
-                            scope.launch {
-                                animatedStartPercent.animateTo(
-                                    targetValue = steps[index],
-                                    animationSpec = tween(800, easing = LinearEasing)
-                                )
+                                if (nextIndex != index) {
+                                    index = nextIndex
+                                    scope.launch {
+                                        animatedStartPercent.animateTo(
+                                            targetValue = steps[index],
+                                            animationSpec = tween(800, easing = LinearEasing)
+                                        )
+                                    }
+                                }
+
+                                // Reset drag
+                                totalDrag = 0f
+                            },
+                            onHorizontalDrag = { change, dragAmount ->
+                                totalDrag += dragAmount
+                                change.consume()
                             }
-                        }
-
-                        // Reset drag
-                        totalDrag = 0f
+                        )
                     },
-                    onHorizontalDrag = { change, dragAmount ->
-                        totalDrag += dragAmount
-                        change.consume()
+                contentAlignment = Alignment.Center
+            ) {
+
+                AnimatedContent(
+                    targetState = index to animateEntry,
+                    transitionSpec = {
+                        (slideInVertically(
+                            initialOffsetY = { -it }, // New images come from top
+                            animationSpec = tween(800)
+                        ) + fadeIn()) togetherWith
+                                (slideOutVertically(
+                                    targetOffsetY = { -it }, // Old images go to top
+                                    animationSpec = tween(800)
+                                ) + fadeOut())
+                    },
+                    contentAlignment = Alignment.Center,
+                    label = "ImageTransition"
+                ) { (targetIndex, hasAnimated) ->
+
+                    // Image Group based on targetIndex
+                    Box(modifier = Modifier.fillMaxSize()) {
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][0],
+                            modifier = Modifier
+                                .padding(top = 100.dp)
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .graphicsLayer { translationY = hover1 },
+                            alignment = Alignment.Center,
+                            contentScale = ContentScale.FillBounds
+                        )
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][1],
+                            modifier = Modifier
+                                .padding(start = 50.dp, bottom = 250.dp)
+                                .size(200.dp)
+                                .graphicsLayer { translationY = hover2 }
+                                .rotate(-30f),
+                            alignment = Alignment.CenterStart
+                        )
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][2],
+                            modifier = Modifier
+                                .padding(top = 20.dp)
+                                .size(150.dp)
+                                .graphicsLayer { translationY = hover3 },
+                            alignment = Alignment.TopStart
+                        )
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][3],
+                            modifier = Modifier
+                                .padding(top = 100.dp)
+                                .size(150.dp)
+                                .graphicsLayer { translationY = hover4 }
+                                .rotate(-30f),
+                            alignment = Alignment.TopEnd
+                        )
                     }
-                )
-            },
-        contentAlignment = Alignment.Center
-    ) {
-
-            AnimatedContent(
-                targetState = index to animateEntry,
-                transitionSpec = {
-                    (slideInVertically(
-                        initialOffsetY = { -it }, // New images come from top
-                        animationSpec = tween(800)
-                    ) + fadeIn()) togetherWith
-                            (slideOutVertically(
-                                targetOffsetY = { -it }, // Old images go to top
-                                animationSpec = tween(800)
-                            ) + fadeOut())
-                },
-                contentAlignment = Alignment.Center,
-                label = "ImageTransition"
-            ) { (targetIndex, hasAnimated) ->
-
-                // Image Group based on targetIndex
-                Box(modifier = Modifier.fillMaxSize()) {
-
-                    AnimatedImageFromTop(
-                        visibility = hasAnimated,
-                        imageResId = imageList[targetIndex][0],
-                        modifier = Modifier
-                            .padding(top = 100.dp)
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .graphicsLayer { translationY = hover1 },
-                        alignment = Alignment.Center,
-                        contentScale = ContentScale.FillBounds
-                    )
-
-                    AnimatedImageFromTop(
-                        visibility = hasAnimated,
-                        imageResId = imageList[targetIndex][1],
-                        modifier = Modifier
-                            .padding(start = 50.dp, bottom = 250.dp)
-                            .size(200.dp)
-                            .graphicsLayer { translationY = hover2 }
-                            .rotate(-30f),
-                        alignment = Alignment.CenterStart
-                    )
-
-                    AnimatedImageFromTop(
-                        visibility = hasAnimated,
-                        imageResId = imageList[targetIndex][2],
-                        modifier = Modifier
-                            .padding(top = 20.dp)
-                            .size(150.dp)
-                            .graphicsLayer { translationY = hover3 },
-                        alignment = Alignment.TopStart
-                    )
-
-                    AnimatedImageFromTop(
-                        visibility = hasAnimated,
-                        imageResId = imageList[targetIndex][3],
-                        modifier = Modifier
-                            .padding(top = 100.dp)
-                            .size(150.dp)
-                            .graphicsLayer { translationY = hover4 }
-                            .rotate(-30f),
-                        alignment = Alignment.TopEnd
-                    )
                 }
-            }
-            AnimatedContent(
-                targetState = index to animateEntry,
-                transitionSpec = {
-                    (slideInVertically(
-                        initialOffsetY = { it }, // New images come from top
-                        animationSpec = tween(800)
-                    ) + fadeIn()) togetherWith
-                            (slideOutVertically(
-                                targetOffsetY = { it }, // Old images go to top
-                                animationSpec = tween(800)
-                            ) + fadeOut())
-                },
-                contentAlignment = Alignment.Center,
-                label = "TextTransition"
-            ){
-                    (targetIndex, hasAnimated) ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    AnimatedContentFromTop(
-                        visibility = hasAnimated,
-                        modifier = Modifier,
-                        title = textList[targetIndex][0],
-                        content = textList[targetIndex][1],
-                        alignment = Alignment.BottomStart,
-                    )
+                AnimatedContent(
+                    targetState = index to animateEntry,
+                    transitionSpec = {
+                        (slideInVertically(
+                            initialOffsetY = { it }, // New images come from top
+                            animationSpec = tween(800)
+                        ) + fadeIn()) togetherWith
+                                (slideOutVertically(
+                                    targetOffsetY = { it }, // Old images go to top
+                                    animationSpec = tween(800)
+                                ) + fadeOut())
+                    },
+                    contentAlignment = Alignment.Center,
+                    label = "TextTransition"
+                ) { (targetIndex, hasAnimated) ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AnimatedContentFromTop(
+                            visibility = hasAnimated,
+                            modifier = Modifier,
+                            title = textList[targetIndex][0],
+                            content = textList[targetIndex][1],
+                            alignment = Alignment.BottomStart,
+                        )
+                    }
                 }
-            }
+
+                Canvas(
+                    modifier = modifier
+                        .graphicsLayer {
+                            translationY = hoverOffset
+                        })
+                {
+                    val paint = Paint()
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    val maskWidth = maskBitmap.width
+                    val maskHeight = maskBitmap.height
+
+                    // Animate visible 33% window of mask
+                    val srcStartX = (maskWidth * animatedStartPercent.value).toInt()
+                    val srcEndX =
+                        (srcStartX + (maskWidth * 0.33f)).coerceAtMost(maskWidth.toFloat()).toInt()
+                    val srcWidth = srcEndX - srcStartX
+
+                    // Slightly shrink and center mask image
+                    val shrinkFactor = 0.98f
+                    val shrinkedWidth = (canvasWidth * shrinkFactor).toInt()
+                    val shrinkedHeight = (canvasHeight * shrinkFactor).toInt()
+                    val offsetX = ((canvasWidth - shrinkedWidth) / 2f).toInt()
+                    val offsetY = ((canvasHeight - shrinkedHeight) / 2f).toInt()
+
+                    drawIntoCanvas { canvas ->
+                        canvas.saveLayer(Rect(0f, 0f, canvasWidth, canvasHeight), paint)
+
+                        // Draw base image stretched to full canvas
+                        canvas.drawImageRect(
+                            image = imageBitmap,
+                            srcOffset = IntOffset.Zero,
+                            srcSize = IntSize(imageBitmap.width, imageBitmap.height),
+                            dstOffset = IntOffset.Zero,
+                            dstSize = IntSize(canvasWidth.toInt(), canvasHeight.toInt()),
+                            paint = paint
+                        )
+                        // Apply the mask using BlendMode.DstIn
+                        paint.blendMode = BlendMode.Modulate
+
+                        canvas.drawImageRect(
+                            image = maskBitmap,
+                            srcOffset = IntOffset(srcStartX, 0),
+                            srcSize = IntSize(srcWidth, maskHeight),
+                            dstOffset = IntOffset(offsetX, offsetY),
+                            dstSize = IntSize(shrinkedWidth, shrinkedHeight),
+                            paint = paint
+                        )
 
 
-
-        Canvas(
-            modifier = modifier
-                .graphicsLayer {
-                    translationY = hoverOffset
-                })
-        {
-            val paint = Paint()
-            val canvasWidth = size.width
-            val canvasHeight = size.height
-            val maskWidth = maskBitmap.width
-            val maskHeight = maskBitmap.height
-
-            // Animate visible 33% window of mask
-            val srcStartX = (maskWidth * animatedStartPercent.value).toInt()
-            val srcEndX =
-                (srcStartX + (maskWidth * 0.33f)).coerceAtMost(maskWidth.toFloat()).toInt()
-            val srcWidth = srcEndX - srcStartX
-
-            // Slightly shrink and center mask image
-            val shrinkFactor = 0.98f
-            val shrinkedWidth = (canvasWidth * shrinkFactor).toInt()
-            val shrinkedHeight = (canvasHeight * shrinkFactor).toInt()
-            val offsetX = ((canvasWidth - shrinkedWidth) / 2f).toInt()
-            val offsetY = ((canvasHeight - shrinkedHeight) / 2f).toInt()
-
-            drawIntoCanvas { canvas ->
-                canvas.saveLayer(Rect(0f, 0f, canvasWidth, canvasHeight), paint)
-
-                // Draw base image stretched to full canvas
-                canvas.drawImageRect(
-                    image = imageBitmap,
-                    srcOffset = IntOffset.Zero,
-                    srcSize = IntSize(imageBitmap.width, imageBitmap.height),
-                    dstOffset = IntOffset.Zero,
-                    dstSize = IntSize(canvasWidth.toInt(), canvasHeight.toInt()),
-                    paint = paint
-                )
-                // Apply the mask using BlendMode.DstIn
-                paint.blendMode = BlendMode.Modulate
-
-                canvas.drawImageRect(
-                    image = maskBitmap,
-                    srcOffset = IntOffset(srcStartX, 0),
-                    srcSize = IntSize(srcWidth, maskHeight),
-                    dstOffset = IntOffset(offsetX, offsetY),
-                    dstSize = IntSize(shrinkedWidth, shrinkedHeight),
-                    paint = paint
-                )
-
-
-                canvas.restore()
+                        canvas.restore()
+                    }
+                }
             }
         }
+        else -> {
+        //Phone and horizontal
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(animatedBgColor)
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                val threshold = 80f // minimum drag distance to trigger switch
+
+                                val nextIndex = when {
+                                    totalDrag < -threshold && index < steps.lastIndex -> index + 1
+                                    totalDrag > threshold && index > 0 -> index - 1
+                                    else -> index
+                                }
+
+                                if (nextIndex != index) {
+                                    index = nextIndex
+                                    scope.launch {
+                                        animatedStartPercent.animateTo(
+                                            targetValue = steps[index],
+                                            animationSpec = tween(800, easing = LinearEasing)
+                                        )
+                                    }
+                                }
+
+                                // Reset drag
+                                totalDrag = 0f
+                            },
+                            onHorizontalDrag = { change, dragAmount ->
+                                totalDrag += dragAmount
+                                change.consume()
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+
+                AnimatedContent(
+                    targetState = index to animateEntry,
+                    transitionSpec = {
+                        (slideInVertically(
+                            initialOffsetY = { -it }, // New images come from top
+                            animationSpec = tween(800)
+                        ) + fadeIn()) togetherWith
+                                (slideOutVertically(
+                                    targetOffsetY = { -it }, // Old images go to top
+                                    animationSpec = tween(800)
+                                ) + fadeOut())
+                    },
+                    contentAlignment = Alignment.Center,
+                    label = "ImageTransition"
+                ) { (targetIndex, hasAnimated) ->
+
+                    // Image Group based on targetIndex
+                    Box(modifier = Modifier.fillMaxSize()) {
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][0],
+                            modifier = Modifier
+                                .padding(top = 100.dp)
+                                .fillMaxWidth(0.3f)
+                                .height(150.dp)
+                                .graphicsLayer { translationY = hover1 },
+                            alignment = Alignment.Center,
+                            contentScale = ContentScale.FillBounds
+                        )
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][1],
+                            modifier = Modifier
+                                .padding(start = 50.dp, bottom = 250.dp)
+                                .size(200.dp)
+                                .graphicsLayer { translationY = hover2 }
+                                .rotate(-30f),
+                            alignment = Alignment.CenterStart
+                        )
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][2],
+                            modifier = Modifier
+                                .padding(top = 20.dp)
+                                .size(150.dp)
+                                .graphicsLayer { translationY = hover3 },
+                            alignment = Alignment.TopStart
+                        )
+
+                        AnimatedImageFromTop(
+                            imageResId = imageList[targetIndex][3],
+                            modifier = Modifier
+                                .padding(top = 100.dp)
+                                .size(150.dp)
+                                .graphicsLayer { translationY = hover4 }
+                                .rotate(-30f),
+                            alignment = Alignment.TopEnd
+                        )
+                    }
+                }
+                AnimatedContent(
+                    targetState = index to animateEntry,
+                    transitionSpec = {
+                        (slideInVertically(
+                            initialOffsetY = { it }, // New images come from top
+                            animationSpec = tween(800)
+                        ) + fadeIn()) togetherWith
+                                (slideOutVertically(
+                                    targetOffsetY = { it }, // Old images go to top
+                                    animationSpec = tween(800)
+                                ) + fadeOut())
+                    },
+                    contentAlignment = Alignment.Center,
+                    label = "TextTransition"
+                ) { (targetIndex, hasAnimated) ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AnimatedContentFromTop(
+                            visibility = hasAnimated,
+                            modifier = Modifier,
+                            title = textList[targetIndex][0],
+                            content = textList[targetIndex][1],
+                            alignment = Alignment.BottomStart,
+                        )
+                    }
+                }
+
+                Canvas(
+                    modifier = modifier
+                        .graphicsLayer {
+                            translationY = hoverOffset
+                        })
+                {
+                    val paint = Paint()
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    val maskWidth = maskBitmap.width
+                    val maskHeight = maskBitmap.height
+
+                    // Animate visible 33% window of mask
+                    val srcStartX = (maskWidth * animatedStartPercent.value).toInt()
+                    val srcEndX =
+                        (srcStartX + (maskWidth * 0.33f)).coerceAtMost(maskWidth.toFloat()).toInt()
+                    val srcWidth = srcEndX - srcStartX
+
+                    // Slightly shrink and center mask image
+                    val shrinkFactor = 0.98f
+                    val shrinkedWidth = (canvasWidth * shrinkFactor).toInt()
+                    val shrinkedHeight = (canvasHeight * shrinkFactor).toInt()
+                    val offsetX = ((canvasWidth - shrinkedWidth) / 2f).toInt()
+                    val offsetY = ((canvasHeight - shrinkedHeight) / 2f).toInt()
+
+                    drawIntoCanvas { canvas ->
+                        canvas.saveLayer(Rect(0f, 0f, canvasWidth, canvasHeight), paint)
+
+                        // Draw base image stretched to full canvas
+                        canvas.drawImageRect(
+                            image = imageBitmap,
+                            srcOffset = IntOffset.Zero,
+                            srcSize = IntSize(imageBitmap.width, imageBitmap.height),
+                            dstOffset = IntOffset.Zero,
+                            dstSize = IntSize(canvasWidth.toInt(), canvasHeight.toInt()),
+                            paint = paint
+                        )
+                        // Apply the mask using BlendMode.DstIn
+                        paint.blendMode = BlendMode.Modulate
+
+                        canvas.drawImageRect(
+                            image = maskBitmap,
+                            srcOffset = IntOffset(srcStartX, 0),
+                            srcSize = IntSize(srcWidth, maskHeight),
+                            dstOffset = IntOffset(offsetX, offsetY),
+                            dstSize = IntSize(shrinkedWidth, shrinkedHeight),
+                            paint = paint
+                        )
 
 
-
-
+                        canvas.restore()
+                    }
+                }
+            }
+        }
     }
+
 }
 
 @Composable
@@ -409,7 +595,7 @@ fun AnimatedContentFromTop(
             HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth(progress)
-                    .padding(start = 10.dp,top=8.dp, end = 10.dp),
+                    .padding(start = 10.dp, top = 8.dp, end = 10.dp),
                 thickness = 3.dp,
                 color = Color.White
 
@@ -432,7 +618,6 @@ fun AnimatedContentFromTop(
 
 @Composable
 fun AnimatedImageFromTop(
-    visibility: Boolean,
     imageResId: Int,
     modifier: Modifier,
     alignment: Alignment,
