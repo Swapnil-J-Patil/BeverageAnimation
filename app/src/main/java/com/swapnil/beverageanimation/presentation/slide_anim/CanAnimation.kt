@@ -89,8 +89,8 @@ fun CanAnimation(
     val animatedStartPercent = remember { Animatable(steps[index]) }
     val colors = listOf(
         Color(0xFFEB7D7C),
-        Color(0xFFFCC485),
-        Color(0xFFAAA5FD)
+        Color(0xFFFCBD77),
+        Color(0xFF8C85FD)
     )
     val animatedBgColor by animateColorAsState(
         targetValue = colors[index],
@@ -117,17 +117,18 @@ fun CanAnimation(
             R.drawable.watermelon,
         ),
         listOf(
-            R.drawable.exotic_middle_img,
+            R.drawable.peach_middle_img,
             R.drawable.peach,
             R.drawable.peach,
             R.drawable.peach,
         ),
         listOf(
             R.drawable.exotic_middle_img,
+            R.drawable.peach,
+            R.drawable.exotic_fruit1,
             R.drawable.exotic_fruit2,
-            R.drawable.exotic_fruit1,
-            R.drawable.exotic_fruit1,
-        )
+
+            )
     )
 
     val textList = listOf(
@@ -529,6 +530,8 @@ fun CanAnimation(
     }
 
 }
+
+
 
 @Composable
 fun rememberHoverOffset(
